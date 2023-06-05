@@ -1,13 +1,49 @@
 import {LockClosedIcon} from "@heroicons/react/24/solid/index.js";
+import {useState} from "react";
+import axiosClient from "../axios.js";
+import {useStateContext} from "../contexts/ContextProvider.jsx";
+import {Link} from "react-router-dom";
 
 export default function Login() {
+    const {setUserToken, setCurrentUser} = useStateContext();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [remember, setRemember] = useState(false);
+    const [error, setError] = useState({__html: ''});
+
+    const onSubmit = (event) => {
+        event.preventDefault();
+        setError({__html: ''});
+
+        axiosClient.post('/login', {
+            email: email,
+            password: password,
+            remember: remember
+        })
+        .then(({data}) => {
+            setCurrentUser(data.user);
+            setUserToken(data.token);
+        })
+        .catch((error) => {
+            if(error.response) {
+                if(error.response.data.errors) {
+                    const errorsFinal = Object.values(error.response.data.errors).reduce((acc, next) => [...acc, ...next], [])
+                    setError({__html: errorsFinal.join('<br>')});
+                } else if(error.response.data.error) {
+                    setError({__html: error.response.data.error});
+                }
+            }
+            console.error(error.message);
+        })
+    }
     return (
         <>
             <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
                 Sign in to your account
             </h2>
             <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-                <form className="space-y-6" action="#" method="POST">
+                {error.__html && (<div className='bg-red-500 rounded mb-4 py-2 px-3 text-white' dangerouslySetInnerHTML={error}></div> )}
+                <form onSubmit={onSubmit} className="space-y-6" action="#" method="POST">
                     <div>
                         <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
                             Email address
@@ -20,6 +56,8 @@ export default function Login() {
                                 autoComplete="email"
                                 required
                                 className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                value={email}
+                                onChange={(event) => setEmail(event.target.value)}
                             />
                         </div>
                     </div>
@@ -38,6 +76,8 @@ export default function Login() {
                                 autoComplete="current-password"
                                 required
                                 className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                value={password}
+                                onChange={(event) => setPassword(event.target.value)}
                             />
                         </div>
                     </div>
@@ -46,19 +86,16 @@ export default function Login() {
                         <div className="flex items-center justify-between">
                             <div className="flex items-center">
                                 <input
-                                    id="remember-me"
-                                    name="remember-me"
+                                    id="remember"
+                                    name="remember"
                                     type="checkbox"
                                     className="h4 w4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                    checked={remember}
+                                    onChange={(event) => setRemember(event.target.checked)}
                                 />
-                                <label htmlFor="remember-me" className="ml-1 block text-sm text-gray-900">
+                                <label htmlFor="remember" className="ml-1 block text-sm text-gray-900">
                                     Remember me
                                 </label>
-                            </div>
-                            <div className="text-sm">
-                                <a href="#" className="font-semibold text-indigo-600 hover:text-indigo-500">
-                                    Forgot password?
-                                </a>
                             </div>
                         </div>
                     </div>
@@ -71,16 +108,16 @@ export default function Login() {
                                 <span className="absolute inset-y-0 left-0 flex items-center pl-3">
                                     <LockClosedIcon className="h-5 w-5 text-indigo-500 group-hover:text-indigo-400" aria-hidden="true" />
                                 </span>
-                            Sign in
+                            Log in
                         </button>
                     </div>
                 </form>
 
                 <p className="mt-10 text-center text-sm text-gray-500">
                     Not a member?{' '}
-                    <a href="#" className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500">
-                        Start a 14 day free trial
-                    </a>
+                    <Link to="/signup" className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500">
+                        Signup for free
+                    </Link>
                 </p>
             </div>
         </>
