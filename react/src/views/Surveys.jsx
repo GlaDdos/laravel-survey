@@ -3,12 +3,18 @@ import {useStateContext} from "../contexts/ContextProvider.jsx";
 import SurveyListItem from "../components/SurveyListItem.jsx";
 import TButton from "../components/core/TButton.jsx";
 import {PlusCircleIcon} from "@heroicons/react/24/outline/index.js";
+import {useEffect} from "react";
 
 export default function Surveys() {
     const {surveys} = useStateContext();
     const onDeleteClick = () => {
         console.log("on delete click");
     }
+
+    useEffect(() => {
+
+    }, [])
+
     return (
         <PageComponent title="Surveys" buttons= {(
             <TButton color="green" to="/surveys/create">

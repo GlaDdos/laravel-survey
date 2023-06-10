@@ -3,8 +3,14 @@ import {useState} from "react";
 import {PhotoIcon} from "@heroicons/react/20/solid/index.js";
 import TButton from "../components/core/TButton.jsx";
 import axiosClient from "../axios.js";
+import {useNavigate} from "react-router-dom";
+import SurveyQuestions from "../components/SurveyQuestions.jsx";
+import {v4 as uuidv4} from 'uuid';
+
 
 export default function SurveyView() {
+    const navigate = useNavigate();
+    const [error, setError] = useState('');
     const [survey, setSurvey] = useState({
         title: "",
         slug: "",
@@ -16,18 +22,61 @@ export default function SurveyView() {
         questions: []
     });
 
-    const onImageChoose = () => {
-        console.log("on image choose");
+    const onImageChoose = (event) => {
+        const file = event.target.files[0];
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            setSurvey({
+                ...survey,
+                image: file,
+                image_url: reader.result
+            });
+
+            event.target.value = "";
+        }
+        reader.readAsDataURL(file);
     }
 
     const onSubmit = (event) => {
         event.preventDefault();
-        axiosClient.post('/survey', {
-            title: 'Lorem ipsum',
-            description: 'test',
-            expire_date: '30.06.2023',
-            status: true,
-            questions: []
+
+        const payload = {...survey};
+
+        if(payload.image) {
+            payload.image = payload.image_url
+        }
+
+        delete payload.image_url;
+
+        axiosClient.post('/survey', payload)
+            .then( response => {
+                console.log(response);
+                navigate('/surveys');
+            })
+            .catch( err => {
+                if(err && err.response) {
+                    setError(err.response.data.message);
+                }
+                console.log(err)
+            })
+    }
+
+    const addQuestion = () => {
+        survey.questions.push({
+            id: uuidv4(),
+            type: "text",
+            question: "",
+            description: "",
+            data: {},
+        });
+        setSurvey({ ...survey });
+    };
+
+    const onQuestionsUpdate = (questions) => {
+        setSurvey({
+            ...survey,
+            questions
         });
     }
 
@@ -36,6 +85,9 @@ export default function SurveyView() {
             <form action="#" method="POST" onSubmit={onSubmit}>
                 <div className="shadow sm:overflow:hidden sm:rounded-md">
                     <div className="space-y-6 bg-white px-4 py-5 sm:p-6">
+                        {error && <div className="bg-red-500 text-white py-3 px-3">
+                            {error}
+                        </div>}
                         {/* Image */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700">
@@ -145,7 +197,9 @@ export default function SurveyView() {
                                 </p>
                             </div>
                         </div>
+                        <SurveyQuestions questions={survey.questions} onQuestionsUpdate={onQuestionsUpdate}/>
                     </div>
+
                     <div className="bg-ghray-50 px-4 py-3 text-right sm:px-6">
                         <TButton>
                             Save

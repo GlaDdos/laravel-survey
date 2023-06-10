@@ -8,12 +8,12 @@ use App\Http\Requests\SurveyUpdateRequest;
 use App\Http\Resources\SurveyResource;
 use App\Models\Survey;
 use App\Models\SurveyQuestion;
-use http\Env\Response;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 
 class SurveyController extends Controller
