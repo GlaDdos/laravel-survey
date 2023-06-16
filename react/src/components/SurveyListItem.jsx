@@ -8,7 +8,7 @@ export default function SurveyListItem({survey, onDeleteClick}) {
             <h4 className="mt-4 text-lg font-bold">{survey.title}</h4>
             <div dangerouslySetInnerHTML={{__html: survey.description }} className="overflow-hidden flex-1"></div>
             <div className="flex justify-between items-center mt-3">
-                <TButton to={`surveys/${survey.id}`}>
+                <TButton to={`/surveys/${survey.id}`}>
                     <PencilIcon className="w-5 h-5 mr-2" />
                     Edit
                 </TButton>
@@ -18,7 +18,7 @@ export default function SurveyListItem({survey, onDeleteClick}) {
                     </TButton>
 
                 {survey.id && (
-                    <TButton onClick={onDeleteClick} circle link color="red">
+                    <TButton onClick={(event) => onDeleteClick(survey.id)} circle link color="red">
                         <TrashIcon className="w-5 h-5" />
                     </TButton>
                 )}

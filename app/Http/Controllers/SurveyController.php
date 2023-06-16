@@ -24,7 +24,7 @@ class SurveyController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        return SurveyResource::collection(Survey::where('user_id', $user->id)->orderBy('created_at', 'desc')->paginate(10));
+        return SurveyResource::collection(Survey::where('user_id', $user->id)->orderBy('created_at', 'desc')->paginate(2));
     }
 
     /**
@@ -183,15 +183,17 @@ class SurveyController extends Controller
     {
         if(is_array($data['data'])) {
             $data['data'] = json_encode($data['data']);
-
-            $validator = Validator::make($data, [
-                'id' => 'exists:App\Models\SurveyQuestion,id',
-                'question' => 'required|string',
-                'type' => ['required', new Enum(QuestionTypeEnum::class)],
-                'description' => 'nullable|string',
-                'data' => 'present'
-            ]);
         }
+
+        $validator = Validator::make($data, [
+            'id' => 'exists:App\Models\SurveyQuestion,id',
+            'question' => 'required|string',
+            'type' => ['required', new Enum(QuestionTypeEnum::class)],
+            'description' => 'nullable|string',
+            'data' => 'present',
+            'expire_date' => 'nullable|date'
+        ]);
+
 
         return $question->update($validator->validated());
     }

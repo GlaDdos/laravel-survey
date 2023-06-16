@@ -1,16 +1,19 @@
 import PageComponent from "../components/PageComponent.jsx";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {PhotoIcon} from "@heroicons/react/20/solid/index.js";
 import TButton from "../components/core/TButton.jsx";
 import axiosClient from "../axios.js";
-import {useNavigate} from "react-router-dom";
+import {useNavigate, useParams} from "react-router-dom";
 import SurveyQuestions from "../components/SurveyQuestions.jsx";
 import {v4 as uuidv4} from 'uuid';
+import {useStateContext} from "../contexts/ContextProvider.jsx";
 
 
 export default function SurveyView() {
+    const {showToast} = useStateContext();
     const navigate = useNavigate();
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
     const [survey, setSurvey] = useState({
         title: "",
         slug: "",
@@ -21,6 +24,7 @@ export default function SurveyView() {
         expire_date: "",
         questions: []
     });
+    const {id} =useParams();
 
     const onImageChoose = (event) => {
         const file = event.target.files[0];
@@ -48,11 +52,18 @@ export default function SurveyView() {
         }
 
         delete payload.image_url;
+        let res = null;
+        if(id) {
+            res = axiosClient.put(`/survey/${id}`, payload)
+        } else {
+            res = axiosClient.post('/survey', payload)
+        }
 
-        axiosClient.post('/survey', payload)
+        res
             .then( response => {
                 console.log(response);
                 navigate('/surveys');
+                id ? showToast('Survey was updated!') : showToast('Survey was created!');
             })
             .catch( err => {
                 if(err && err.response) {
@@ -80,9 +91,21 @@ export default function SurveyView() {
         });
     }
 
+    useEffect(() => {
+        if(id) {
+            setLoading(true);
+            axiosClient.get(`/survey/${id}`)
+                .then(({data}) => {
+                    setSurvey(data.data);
+                    setLoading(false);
+                })
+        }
+    }, [])
+
     return (
-        <PageComponent title="Create survey" >
-            <form action="#" method="POST" onSubmit={onSubmit}>
+        <PageComponent title={ id ? 'Update survey' : 'Create new survey'} >
+            { loading && <div className='text-center text-lg'>Loading...</div> }
+            { !loading && <form action="#" method="POST" onSubmit={onSubmit}>
                 <div className="shadow sm:overflow:hidden sm:rounded-md">
                     <div className="space-y-6 bg-white px-4 py-5 sm:p-6">
                         {error && <div className="bg-red-500 text-white py-3 px-3">
@@ -95,15 +118,16 @@ export default function SurveyView() {
                             </label>
                             <div className="mt-1 flex items-center">
                                 {survey.image_url && (
-                                        <img
-                                            src={survey.image_url}
-                                            alt=""
-                                            className="w-32 h-32 object-cover"
-                                        />
+                                    <img
+                                        src={survey.image_url}
+                                        alt=""
+                                        className="w-32 h-32 object-cover"
+                                    />
                                 )}
-                                {!survey.image && (
-                                    <span className="flex justify-center items-center text-gray-400 h-12 w-12 overflow-hidden rounded-full bg-gray-100">
-                                        <PhotoIcon className="w-8 h-8" />
+                                {!survey.image_url && (
+                                    <span
+                                        className="flex justify-center items-center text-gray-400 h-12 w-12 overflow-hidden rounded-full bg-gray-100">
+                                        <PhotoIcon className="w-8 h-8"/>
                                     </span>
                                 )}
                                 <button
@@ -112,7 +136,8 @@ export default function SurveyView() {
                                     font-medium leading-4 text-gray-700 shadow-sm hover:bg0gray-50 focus:outline-none
                                     focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                 >
-                                    <input type="file" className="absolute left-0 top-0 right-0 bottom-0 opacity-0" onChange={onImageChoose}/>
+                                    <input type="file" className="absolute left-0 top-0 right-0 bottom-0 opacity-0"
+                                           onChange={onImageChoose}/>
                                     Change
                                 </button>
                             </div>
@@ -153,7 +178,9 @@ export default function SurveyView() {
                                 placeholder="Describe your survey"
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-50
                                 focus:ring-indigo-500 sm:text-sm"
-                                onChange={(event) => {setSurvey({...survey, description: event.target.value})}}
+                                onChange={(event) => {
+                                    setSurvey({...survey, description: event.target.value})
+                                }}
                             ></textarea>
                         </div>
 
@@ -206,7 +233,7 @@ export default function SurveyView() {
                         </TButton>
                     </div>
                 </div>
-            </form>
+            </form>}
         </PageComponent>
     );
 }
