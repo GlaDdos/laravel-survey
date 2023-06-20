@@ -9,5 +9,5 @@ class SurveyQuestion extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['survey_id', 'question', 'type', 'description'];
+    protected $fillable = ['survey_id', 'question', 'type', 'description', 'id', 'data'];
 }

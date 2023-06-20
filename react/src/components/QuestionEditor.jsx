@@ -1,6 +1,7 @@
 import {useEffect, useState} from "react";
 import {useStateContext} from "../contexts/ContextProvider.jsx";
 import {PlusIcon, TrashIcon} from "@heroicons/react/20/solid/index.js";
+import {v4 as uuidv4} from 'uuid';
 
 export default function QuestionEditor({
     index = 0,
@@ -19,6 +20,45 @@ export default function QuestionEditor({
 
     function upperCaseFirst(str) {
         return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    function shouldHaveOptions(type = null) {
+        type = type || model.type;
+        return ['select', 'radio', 'checkbox'].includes(type);
+    }
+
+    function onTypeChange(event) {
+       const newModel = {
+           ...model,
+           type: event.target.value
+       };
+
+       if(!shouldHaveOptions(model.type) && shouldHaveOptions(event.target.value)) {
+           if(!model.data.options) {
+               newModel.data = {
+                   options: [
+                       {
+                           uuid: uuidv4(),
+                           text: ''
+                       }
+                   ]
+               }
+           }
+       } else if(shouldHaveOptions(model.type) && !shouldHaveOptions(event.target.value)) {
+            newModel.data = {};
+       }
+       setModel(newModel)
+    }
+
+    function addOption() {
+        model.data.options.push(
+            {
+                uuid: uuidv4(),
+                text: ''
+            }
+        )
+
+        setModel({...model});
     }
 
     return (
@@ -80,7 +120,8 @@ export default function QuestionEditor({
                         name="questionType"
                         className="mt-1 block w-full rounded-md border border-gray-300 bg-white py-2 px-3 shadow-sm
                         focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                        onChange={(event) => setModel({...model, type: event.target.value})}
+                        onChange={onTypeChange}
+                        value={model.type}
                     >
                         {questionTypes.map((type) => (
                             <option key={type} value={type}>{upperCaseFirst(type)}</option>
@@ -106,6 +147,45 @@ export default function QuestionEditor({
                         focus:ring-indigo-500 sm:text-sm"
                 >
                     </textarea>
+            </div>
+
+            <div>
+                {shouldHaveOptions() && <div>
+                    <h4 className="text-sm font-semibold mb-1 flex justify-between items-center">
+                        Options
+                        <button
+                            type="button"
+                            className="flex items-center text-xs py-1 px-2 rounded-sm text-white bg-gray-600 hover:bg-gray-700"
+                            onClick={addOption}
+                        >
+                            Add
+                        </button>
+                    </h4>
+
+                    {model.data.options.length === 0 && (<div className="text-xs text-gray-600 text-center py-3">
+                        You don't have any options defined.
+                    </div>)}
+
+                    {model.data.options.length > 0 && <div>
+                        {model.data.options.map((op, ind)=> (
+                                <div key={op.uuid} className="flex items-center mb-1">
+                                    <span className="w-6 text-sm">{ind+1}.</span>
+                                    <input
+                                        type="text"
+                                        value={op.text}
+                                        className="w-full rounded-sm py-1 px-2 text-xs border
+                                        border-gray-300 focus:border-indigo-500"
+                                        onInput={event => {op.text = event.target.value; setModel({...model})}}
+                                    />
+                                    <button type="button" className="h-6 w-6 rounded-full flex items-center justify-center
+                                    border border-transparent transition-colors hover:border-red-100">
+                                        <TrashIcon className="w-3 h-3 text-red-500" />
+                                    </button>
+                                </div>
+                            ))}
+                    </div>}
+
+                </div>}
             </div>
         </div>
     )
